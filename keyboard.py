@@ -19,10 +19,12 @@ class Button:
         self.y = y
         self.font_size = font_size
         self.window = window
+        self.rect = 0
 
     def creating_area(self):
         font = pygame.font.Font(None, self.font_size)
         surface = pygame.draw.rect(self.window, self.background_color, (self.x, self.y, self.width, 55), 0, border_radius=3)
+        self.rect = surface
         letter_surface = font.render(self.letter, True, BLACK)
         letter_rect = letter_surface.get_rect(center = surface.center)
         self.window.blit(letter_surface, letter_rect)
@@ -44,6 +46,8 @@ def keyboard_display(window):
             current_x += 50
 
     enter = Button('ENTER', WHITE, 65, 30, 590, 20, window)
+    buttons[enter] = enter
     enter.creating_area()
     backspace = Button('RETURN', WHITE, 65, 455, 590, 20, window)
+    buttons[backspace] = backspace
     backspace.creating_area()
