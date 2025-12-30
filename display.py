@@ -3,6 +3,7 @@ import pygame
 
 from keyboard import keyboard_display, buttons
 from rows import LetterArea
+from word_of_the_day import word_draw
 
 
 SCREEN_WIDTH = 550
@@ -11,6 +12,7 @@ WINDOW_COLOR = (31, 27, 27)
 WHITE = (255, 255, 255)
 
 grid = []
+user_word = []
 current_row = 0
 current_col = 0
 start_x = 130
@@ -24,6 +26,9 @@ text = font.render('WORDLE', True, WHITE)
 window = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 window.fill(WINDOW_COLOR)
 pygame.display.set_caption("WORDLE")
+
+word_to_guess = word_draw()
+print(word_to_guess)
 
 keyboard_display(window)
 
@@ -48,6 +53,7 @@ while running:
         for tile in row:
             tile.letter_display(window)
 
+
     pygame.display.flip()
     pygame.display.update()
 
@@ -59,21 +65,34 @@ while running:
             mouse_position = event.pos
 
             for button in buttons.values():
-                if button.rect.collidepoint(mouse_position):
+                if button.rect.collidepoint(mouse_position) and button.letter:
                     clicked_letter = button.letter
+                    if clicked_letter != "ENTER":
+                        user_word += clicked_letter
                     if clicked_letter == "ENTER" and current_col == 5:
+                        for i in range(5):
+                            if grid[current_row][i].get_letter() == word_to_guess[i]:
+                                grid[current_row][i].set_color((79, 235, 52))
+                            elif grid[current_row][i].get_letter() in word_to_guess:
+                                grid[current_row][i].set_color((235, 214, 52))
+
+                        if "".join(user_word) == word_to_guess:
+                           running = False
+
+                        user_word = []
                         current_row += 1
                         current_col = 0
-                        print("klkik eneter")
+
                     elif clicked_letter == "RETURN":
                         if current_col > 0:
                             current_col -= 1
                             grid[current_row][current_col].set_letter("")
-                        print("klik return")
+                            user_word.pop()
 
                     else:
-                        if current_col < 5:
+                        if current_col < 5 and clicked_letter != "ENTER":
                             grid[current_row][current_col].set_letter(clicked_letter)
                             current_col += 1
+print(f"guessed password : {word_to_guess}")
 
 pygame.quit()

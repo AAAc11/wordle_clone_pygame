@@ -10,10 +10,9 @@ with open("slowa.txt", 'r', encoding='utf-8') as r, \
     polish_characters = ["ą", "ć", "ę", "ł", "ń", "ó", "ś", "ź", "ż"]
 
     for word in r:
-        word = word.strip()
+        word = word.strip().upper()
         if len(word) == 5:
             if word.isalpha() and word.isascii():
-                w.write(word)
-                w.write("\n")
+                w.write(word + "\n")
 
 
