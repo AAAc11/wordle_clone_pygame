@@ -68,50 +68,60 @@ while running:
     pygame.display.update()
 
     for event in pygame.event.get():
+        clicked_letter = None
         if event.type == pygame.QUIT:
             running = False
-
-        if event.type == pygame.MOUSEBUTTONDOWN:
+        #Physical keyboard
+        elif event.type == pygame.KEYDOWN:
+            if event.unicode.isalpha():
+                clicked_letter = event.unicode.upper()
+            elif event.key == pygame.K_BACKSPACE:
+                clicked_letter = "REMOVE"
+            elif event.key == pygame.K_RETURN:
+                clicked_letter = "ENTER"
+        #On-screen keyboard
+        elif event.type == pygame.MOUSEBUTTONDOWN:
             mouse_position = event.pos
 
             for button in buttons.values():
                 if button.rect.collidepoint(mouse_position) and button.letter:
                     clicked_letter = button.letter
 
-                    if clicked_letter == "ENTER":
-                        if current_col == 5:
-                            for i in range(5):
-                                if grid[current_row][i].get_letter() == word_to_guess[i]:
-                                    grid[current_row][i].set_color(GREEN)
-                                elif grid[current_row][i].get_letter() in word_to_guess:
-                                    grid[current_row][i].set_color(YELLOW)
-                            if current_row == 5:
-                                end_time = time.perf_counter()
-                                gameplay_time = round(end_time - start_time, 2)
-                                result_window.printing_result("lose", current_row, gameplay_time, word_to_guess)
-                                running = False
+        if clicked_letter:
+            if clicked_letter == "ENTER":
+                if current_col == 5:
+                    for i in range(5):
+                        if grid[current_row][i].get_letter() == word_to_guess[i]:
+                            grid[current_row][i].set_color(GREEN)
+                        elif grid[current_row][i].get_letter() in word_to_guess:
+                            grid[current_row][i].set_color(YELLOW)
+                    if current_row == 5:
+                        end_time = time.perf_counter()
+                        gameplay_time = round(end_time - start_time, 2)
+                        result_window.printing_result("lose", current_row, gameplay_time, word_to_guess)
+                        running = False
 
-                            if "".join(user_word) == word_to_guess:
-                                end_time = time.perf_counter()
-                                gameplay_time = round(end_time - start_time, 2)
-                                result_window.printing_result("win", current_row, gameplay_time, word_to_guess)
-                                running = False
+                    if "".join(user_word) == word_to_guess:
+                        end_time = time.perf_counter()
+                        gameplay_time = round(end_time - start_time, 2)
+                        result_window.printing_result("win", current_row, gameplay_time, word_to_guess)
+                        running = False
 
 
-                            user_word = []
-                            current_row += 1
-                            current_col = 0
+                    user_word = []
+                    current_row += 1
+                    current_col = 0
 
-                    elif clicked_letter == "RETURN":
-                        if current_col > 0:
-                            current_col -= 1
-                            grid[current_row][current_col].set_letter("")
-                            user_word.pop()
-                    else:
-                        if current_col < 5:
-                            user_word.append(clicked_letter)
-                            grid[current_row][current_col].set_letter(clicked_letter)
-                            current_col += 1
+            elif clicked_letter == "REMOVE" or clicked_letter == "RETURN":
+                if current_col > 0:
+                    current_col -= 1
+                    grid[current_row][current_col].set_letter("")
+                    user_word.pop()
+            else:
+                if current_col < 5:
+                    user_word.append(clicked_letter)
+                    grid[current_row][current_col].set_letter(clicked_letter)
+                    current_col += 1
 print(f"guessed password : {word_to_guess}")
 
 pygame.quit()
