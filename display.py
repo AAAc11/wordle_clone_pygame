@@ -17,6 +17,7 @@ WINDOW_COLOR = (31, 27, 27)
 WHITE = (255, 255, 255)
 GREEN = (79, 235, 52)
 YELLOW = (235, 214, 52)
+GRAY = (61, 64, 69)
 
 ############### VARIABLES ###############
 grid = []
@@ -91,10 +92,19 @@ while running:
             if clicked_letter == "ENTER":
                 if current_col == 5:
                     for i in range(5):
-                        if grid[current_row][i].get_letter() == word_to_guess[i]:
-                            grid[current_row][i].set_color(GREEN)
-                        elif grid[current_row][i].get_letter() in word_to_guess:
-                            grid[current_row][i].set_color(YELLOW)
+                        for button in buttons.values():
+                            if grid[current_row][i].get_letter() == word_to_guess[i]:
+                                grid[current_row][i].set_color(GREEN)
+                                if button.letter == grid[current_row][i].get_letter():
+                                    button.change_color(GREEN)
+                            elif grid[current_row][i].get_letter() in word_to_guess:
+                                grid[current_row][i].set_color(YELLOW)
+                                if button.letter == grid[current_row][i].get_letter():
+                                    button.change_color(YELLOW)
+                            else:
+                                if button.letter == grid[current_row][i].get_letter():
+                                    button.change_color(GRAY)
+
                     if current_row == 5:
                         end_time = time.perf_counter()
                         gameplay_time = round(end_time - start_time, 2)
