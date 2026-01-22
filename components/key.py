@@ -12,8 +12,11 @@ class Key:
         self.rect = pygame.Rect(self.x, self.y, width , 55)
         self.font = font
 
-    def change_color(self, color):
-        self.color = color
+    def change_color(self, new_color):
+        self.color = new_color
+
+    def get_letter(self):
+        return self.letter
 
     def create_key(self, window):
         surface = pygame.draw.rect(window, self.color, self.rect, 0,

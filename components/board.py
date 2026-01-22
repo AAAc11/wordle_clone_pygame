@@ -26,3 +26,5 @@ class Board:
     def get_current_tile(self):
         return self.rows[self.current_row].get_current_tile()
 
+    def shake_animation(self):
+        self.rows[self.current_row].shake_animation()

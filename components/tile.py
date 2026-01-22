@@ -10,13 +10,30 @@ class Tile:
         self.rect = 0
         self.status = 'unguessed'
         self.color = LIGHT_GRAY
-        self.scale = 1.0
+        self.shake_scale = 0
+        self.is_shaking = False
+        self.shake_movements = []
+
+    def start_shake(self):
+        self.shake_movements = [-5, 5, -5, 5, 0]
+        self.is_shaking = True
+
+    def shake_animation(self):
+        if self.is_shaking:
+            if len(self.shake_movements) > 0:
+                self.shake_scale = self.shake_movements.pop(0)
+            else:
+                self.is_shaking = False
+                self.shake_scale = 0
+
 
     def create_tile(self, window):
+        self.shake_animation()
         thickness = 2
         if self.color != LIGHT_GRAY:
             thickness = 0
-        self.rect = pygame.Rect(self.x, self.y, 50 * self.scale, 50 * self.scale)
+        x = self.x + self.shake_scale
+        self.rect = pygame.Rect(x, self.y, 50, 50)
         pygame.draw.rect(window, self.color, self.rect, thickness)
         text_surface = small_font.render(self.letter, True, WHITE)
         text_rect = text_surface.get_rect(center=self.rect.center)
@@ -35,6 +52,3 @@ class Tile:
 
     def get_letter(self):
         return self.letter
-
-    def animation(self):
-        pass

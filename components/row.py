@@ -35,3 +35,7 @@ class Row:
 
     def get_current_tile(self):
         return self.current_tile
+
+    def shake_animation(self):
+        for tile in self.tiles:
+            tile.start_shake()
