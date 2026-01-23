@@ -2,10 +2,18 @@ import pygame
 pygame.font.init()
 pygame.init()
 
-WINDOW_COLOR = (31, 27, 27)
+DARK_MODE_BG = (31, 27, 27)
+LIGHT_MODE_BG = (230, 230, 230)
+
+IS_DARK_MODE = True
+
+def get_window_color():
+    return DARK_MODE_BG if IS_DARK_MODE else LIGHT_MODE_BG
+
 WHITE = (255, 255, 255)
 GREEN = (79, 235, 52)
 YELLOW = (235, 214, 52)
+RED = (252, 3, 3)
 DARK_GRAY = (74, 74, 73)
 LIGHT_GRAY = (166, 166, 166)
 BLACK = (0, 0, 0)

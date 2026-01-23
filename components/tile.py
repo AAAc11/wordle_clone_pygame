@@ -1,5 +1,6 @@
 import pygame
-from settings import small_font, LIGHT_GRAY, YELLOW, GREEN, WHITE
+from settings import *
+import settings
 
 
 class Tile:
@@ -29,13 +30,26 @@ class Tile:
 
     def create_tile(self, window):
         self.shake_animation()
+
         thickness = 2
-        if self.color != LIGHT_GRAY:
+        current_border_color = self.color
+        if self.color == LIGHT_GRAY:
+            if not settings.IS_DARK_MODE:
+                current_border_color = (180, 180, 180)
+        else:
             thickness = 0
+
         x = self.x + self.shake_scale
         self.rect = pygame.Rect(x, self.y, 50, 50)
-        pygame.draw.rect(window, self.color, self.rect, thickness)
-        text_surface = small_font.render(self.letter, True, WHITE)
+
+        pygame.draw.rect(window, current_border_color, self.rect, thickness)
+
+        if thickness == 0:
+            font_color = WHITE
+        else:
+            font_color = WHITE if settings.IS_DARK_MODE else BLACK
+
+        text_surface = small_font.render(self.letter, True, font_color)
         text_rect = text_surface.get_rect(center=self.rect.center)
         window.blit(text_surface, text_rect)
 

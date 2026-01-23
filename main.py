@@ -1,13 +1,13 @@
 import pygame
 from settings import WORDLE_SCREEN_WIDTH, WORDLE_SCREEN_HEIGHT
-from gamestate import PlayState
+from gamestate import MenuState
 
 pygame.init()
 screen = pygame.display.set_mode((WORDLE_SCREEN_WIDTH, WORDLE_SCREEN_HEIGHT))
 pygame.display.set_caption("WORDLE")
 clock = pygame.time.Clock()
 
-current_state = PlayState(None)
+current_state = MenuState(None)
 
 running = True
 
@@ -17,8 +17,10 @@ while running:
         if event.type == pygame.QUIT:
             running = False
 
-    current_state.handle_events(events)
-    current_state.update()
+    new_state = current_state.handle_events(events)
+    if new_state:
+        current_state = new_state
+
     current_state.draw(screen)
     pygame.display.flip()
     clock.tick(60)

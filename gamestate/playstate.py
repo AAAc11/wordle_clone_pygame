@@ -1,8 +1,9 @@
 import pygame
 from gamestate.state import State
+from gamestate.summarystate import SummaryState
 from components import Board, Keyboard
 from library import word_draw
-from settings import WINDOW_COLOR
+import settings
 
 
 class PlayState(State):
@@ -29,7 +30,10 @@ class PlayState(State):
                 command = self.keyboard.which_letter_is_clicked(event.pos)
 
             if command:
-                self._process_command(command)
+                result = self._process_command(command)
+                if result is not None:
+                    return result
+            return self
 
     def _process_command(self, command):
         if command == "REMOVE":
@@ -40,17 +44,26 @@ class PlayState(State):
             if len(self.users_word) == 5:
                 self.board.check_tiles(self.users_word, self.word_to_guess)
                 self.keyboard.change_color(self.board.rows[self.board.current_row].tiles)
-                self.board.next_row()
 
-                if "".join(self.users_word) == self.word_to_guess.strip():
-                    print("You won!")
+                is_win = "".join(self.users_word) == self.word_to_guess.strip()
+                is_lose = self.board.current_row == 5
+
+                if is_win or is_lose:
+                    new_state = SummaryState(self.game)
+                    new_state.word_to_guess = self.word_to_guess
+                    new_state.used_rows = self.board.current_row + 1
+                    new_state.won = is_win
+                    return new_state
+
+                self.board.next_row()
                 self.users_word = []
+            return None
         elif len(command) == 1:
             if len(self.users_word) < 5:
                 self.board.change_letter(command)
                 self.users_word.append(command)
 
     def draw(self, surface):
-        surface.fill(WINDOW_COLOR)
+        surface.fill(settings.get_window_color())
         self.keyboard.create_keyboard(surface)
         self.board.create_board(surface)

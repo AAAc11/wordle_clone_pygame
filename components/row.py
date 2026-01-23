@@ -1,5 +1,6 @@
 from components.tile import Tile
-from settings import GREEN, YELLOW, DARK_GRAY
+from settings import *
+import settings
 
 class Row:
     def __init__(self,y):
@@ -30,7 +31,10 @@ class Row:
             elif users_word[i] in word_to_guess:
                 self.tiles[i].change_color(YELLOW)
             else:
-                self.tiles[i].change_color(DARK_GRAY)
+                if not settings.IS_DARK_MODE:
+                    self.tiles[i].change_color((120, 124, 126))
+                else:
+                    self.tiles[i].change_color(DARK_GRAY)
 
 
     def get_current_tile(self):
