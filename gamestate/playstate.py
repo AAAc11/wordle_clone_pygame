@@ -15,6 +15,14 @@ class PlayState(State):
         self.users_word = []
         print(f"Word to guess: {self.word_to_guess}")
 
+        pygame.mixer.init()
+        try:
+            self.click_sound = pygame.mixer.Sound("other/click.wav")
+            self.click_sound.set_volume(0.5)
+        except pygame.error:
+            print("Warning: Could not load other/click.wav")
+            self.click_sound = None
+
         try:
             with open("library/przefiltrowany_slownik.txt", "r", encoding="utf-8") as f:
                 self.valid_words = {line.strip().upper() for line in f}
@@ -49,6 +57,8 @@ class PlayState(State):
     def _process_command(self, command):
         if command == "REMOVE":
             if len(self.users_word) > 0:
+                if self.click_sound:
+                    self.click_sound.play()
                 self.board.delete_letter()
                 self.users_word.pop()
 
@@ -58,9 +68,26 @@ class PlayState(State):
 
                 #sprwdzenie czy słowo istnieje
                 if current_attempt not in self.valid_words:
-                    print(f"Word {current_attempt} does not exist")
                     self.board.shake_animation()
                     return None
+
+                if settings.IS_HARD_MODE and self.board.current_row > 0:
+                    last_row = self.board.rows[self.board.current_row - 1]
+
+                    for i, tile in enumerate(last_row.tiles):
+                        #zielona litera na tym samym miejscu
+                        if tile.color == settings.GREEN:
+                            if current_attempt[i] != tile.letter:
+                                print(f"Hard Mode: {tile.letter} must be at position {i + 1}")
+                                self.board.shake_animation()
+                                return None
+
+                        #żółta litera musi być użyta
+                        elif tile.color == settings.YELLOW:
+                            if tile.letter not in current_attempt:
+                                print(f"Hard Mode: Must use letter {tile.letter}")
+                                self.board.shake_animation()
+                                return None
 
                 self.board.check_tiles(self.users_word, self.word_to_guess)
 
@@ -86,6 +113,8 @@ class PlayState(State):
         elif len(command) == 1 and command.isalpha():
             #obsługa wpisywanych liter
             if len(self.users_word) < 5:
+                if self.click_sound:
+                    self.click_sound.play()
                 self.board.change_letter(command)
                 self.users_word.append(command.upper())
 

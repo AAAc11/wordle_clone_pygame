@@ -10,6 +10,8 @@ IS_DARK_MODE = True
 def get_window_color():
     return DARK_MODE_BG if IS_DARK_MODE else LIGHT_MODE_BG
 
+IS_HARD_MODE = False
+
 WHITE = (255, 255, 255)
 GREEN = (79, 235, 52)
 YELLOW = (235, 214, 52)
