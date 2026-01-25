@@ -28,7 +28,6 @@ class Keyboard:
     def which_letter_is_clicked(self, mouse_position):
         for key in self.keys:
             if key.is_clicked(mouse_position):
-                key.change_color(DARK_GRAY)
                 return  key.is_clicked(mouse_position)
 
     def change_color(self, tiles):

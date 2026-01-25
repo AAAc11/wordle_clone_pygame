@@ -16,7 +16,7 @@ class Tile:
         self.shake_movements = []
 
     def start_shake(self):
-        self.shake_movements = [-5, 5, -5, 5, 0]
+        self.shake_movements = [-7, 7, -7, 7, -5, 5, -5, 5, -2, 2, -2, 2, 0]
         self.is_shaking = True
 
     def shake_animation(self):
