@@ -2,6 +2,7 @@ from gamestate.state import State
 from gamestate.playstate import PlayState
 import settings
 from settings import *
+from gamestate.AIplayerstate import AIPlayerState
 
 
 class MenuState(State):
@@ -30,7 +31,7 @@ class MenuState(State):
                     return PlayState(self.game)
 
                 if self.button_ai.collidepoint(event.pos):
-                    print("AI Player mode coming soon...")
+                    return AIPlayerState(self.game)
         return self
 
     def toggle_mode(self):

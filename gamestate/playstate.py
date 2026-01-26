@@ -100,8 +100,8 @@ class PlayState(State):
                 is_lose = self.board.current_row == 5
 
                 if is_win or is_lose:
-                    from gamestate import SummaryState
                     new_state = SummaryState(self.game)
+                    new_state.is_ai = getattr(self, 'is_ai', False)
                     new_state.word_to_guess = self.word_to_guess
                     new_state.used_rows = self.board.current_row + 1
                     new_state.won = is_win

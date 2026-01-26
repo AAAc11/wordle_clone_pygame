@@ -1,6 +1,6 @@
 import sys
-import pygame
 from gamestate.state import State
+from datetime import datetime
 from settings import *
 import settings
 
@@ -10,10 +10,11 @@ class SummaryState(State):
         super().__init__(game)
         self.word_to_guess = ""
         self.won = False
-        self.used_rows = 0
 
         self.button_exit = pygame.Rect(WORDLE_SCREEN_WIDTH // 2 - 150, 450, 140, 60)
         self.button_save = pygame.Rect(WORDLE_SCREEN_WIDTH // 2 + 10, 450, 140, 60)
+
+        self.is_ai = False
 
         pygame.mixer.init()
         self.sound_played = False
@@ -36,7 +37,18 @@ class SummaryState(State):
         return self
 
     def save_game_to_file(self):
-        print("Saving game to file...")
+        now = datetime.now().strftime("%Y-%m-%d %H:%M")
+        result = "VICTORY" if self.won else "DEFEAT"
+
+        #format do zapisu
+        log_entry = f"[{now}] Result: {result}, Word to guess: {self.word_to_guess.upper()}\n"
+
+        try:
+            #zapis do pliku
+            with open("wyniki.txt", "a", encoding="utf-8") as file:
+                file.write(log_entry)
+        except Exception as e:
+            print(f"Error: {e}")
 
     def draw(self, surface):
         if not self.sound_played:
@@ -53,6 +65,12 @@ class SummaryState(State):
         status_text = "YOU WON!" if self.won else "YOU LOST!"
         status_color = GREEN if self.won else RED
 
+        #wynik AI
+        prefix = "AI PLAYER " if self.is_ai else ""
+        status_text = f"{prefix}WON!" if self.won else f"{prefix}LOST!"
+
+        font_to_use = small_font if self.is_ai else medium_font
+        status_surf = font_to_use.render(status_text, True, status_color)
 
         status_surf = medium_font.render(status_text, True, status_color)
         status_rect = status_surf.get_rect(center=(WORDLE_SCREEN_WIDTH // 2, 150))

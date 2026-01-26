@@ -28,3 +28,15 @@ class Board:
 
     def shake_animation(self):
         self.rows[self.current_row].shake_animation()
+
+    def get_last_row_results(self):
+        results = []
+        # current_row jest już o 1 większy, więc sprawdzamy poprzedni
+        last_row = self.rows[self.current_row - 1]
+        for i, tile in enumerate(last_row.tiles):
+            results.append({
+                "index": i,
+                "letter": tile.letter.upper(),
+                "color": tile.color
+            })
+        return results

@@ -1,0 +1,3 @@
+[2026-01-26 13:27] Result: DEFEAT, Word to guess: WIELE
+[2026-01-26 15:11] Result: VICTORY, Word to guess: PRZED
+[2026-01-26 15:40] Result: VICTORY, Word to guess: PRAWO
