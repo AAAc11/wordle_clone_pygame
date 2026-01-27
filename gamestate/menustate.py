@@ -8,9 +8,10 @@ from gamestate.AIplayerstate import AIPlayerState
 class MenuState(State):
     def __init__(self, game):
         super().__init__(game)
+
+        #definicja obszarów przycisków
         self.button_play = pygame.Rect(WORDLE_SCREEN_WIDTH // 2 - 150, 450, 140, 60)
         self.button_ai = pygame.Rect(WORDLE_SCREEN_WIDTH // 2 + 10, 450, 140, 60)
-
         self.difficulty_rect = pygame.Rect(20, WORDLE_SCREEN_HEIGHT - 60, 130, 40)
 
         #przełacznik jasny/ciemny tryb
@@ -21,23 +22,25 @@ class MenuState(State):
     def handle_events(self, events):
         for event in events:
             if event.type == pygame.MOUSEBUTTONDOWN:
+                #zmiana trybu trudności
                 if self.difficulty_rect.collidepoint(event.pos):
                     settings.IS_HARD_MODE = not settings.IS_HARD_MODE
 
+                #zmiana motywu
                 if self.switch_rect.collidepoint(event.pos):
                     settings.IS_DARK_MODE = not settings.IS_DARK_MODE
 
+                #przejście do gry
                 if self.button_play.collidepoint(event.pos):
                     return PlayState(self.game)
 
+                #przejście do player ai
                 if self.button_ai.collidepoint(event.pos):
                     return AIPlayerState(self.game)
         return self
 
-    def toggle_mode(self):
-        settings.IS_DARK_MODE = not settings.IS_DARK_MODE
-
     def draw_static_logo(self, surface):
+        #logo wordle
         word = "WORDLE"
         tile_size = 65
         spacing = 12
@@ -54,10 +57,12 @@ class MenuState(State):
             surface.blit(char_surf, char_rect)
 
     def draw(self, surface):
+
         surface.fill(settings.get_window_color())
 
         self.draw_static_logo(surface)
 
+        #ustawienie koloru elementów względem motywu
         ui_color = WHITE if settings.IS_DARK_MODE else BLACK
 
         #przycisk play
@@ -75,9 +80,7 @@ class MenuState(State):
         #przycisk z trudnością gry (easy/hard)
         diff_color = RED if settings.IS_HARD_MODE else GREEN
         pygame.draw.rect(surface, diff_color, self.difficulty_rect, border_radius=8)
-
         diff_text = "HARD" if settings.IS_HARD_MODE else "EASY"
-
         diff_surf = very_small_font.render(f"MODE: {diff_text}", True, WHITE)
         surface.blit(diff_surf, diff_surf.get_rect(center=self.difficulty_rect.center))
 

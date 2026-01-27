@@ -1,4 +1,5 @@
 import sys
+import random
 from gamestate.state import State
 from datetime import datetime
 from settings import *
@@ -10,12 +11,11 @@ class SummaryState(State):
         super().__init__(game)
         self.word_to_guess = ""
         self.won = False
-
-        self.button_exit = pygame.Rect(WORDLE_SCREEN_WIDTH // 2 - 150, 450, 140, 60)
-        self.button_save = pygame.Rect(WORDLE_SCREEN_WIDTH // 2 + 10, 450, 140, 60)
-
         self.is_ai = False
+        self.show_saved_msg = False
+        self.confetti_particles = []
 
+        #inicjalizowanie dźwięku
         pygame.mixer.init()
         self.sound_played = False
         try:
@@ -25,6 +25,9 @@ class SummaryState(State):
             print("Error: Cannot load the sound")
             self.victory_sound = None
             self.defeat_sound = None
+
+        self.button_exit = pygame.Rect(WORDLE_SCREEN_WIDTH // 2 - 150, 450, 140, 60)
+        self.button_save = pygame.Rect(WORDLE_SCREEN_WIDTH // 2 + 10, 450, 140, 60)
 
     def handle_events(self, events):
         for event in events:
@@ -37,65 +40,84 @@ class SummaryState(State):
         return self
 
     def save_game_to_file(self):
+        #zapis wyniku gry do pliku
         now = datetime.now().strftime("%Y-%m-%d %H:%M")
         result = "VICTORY" if self.won else "DEFEAT"
-
-        #format do zapisu
         log_entry = f"[{now}] Result: {result}, Word to guess: {self.word_to_guess.upper()}\n"
 
         try:
-            #zapis do pliku
             with open("wyniki.txt", "a", encoding="utf-8") as file:
                 file.write(log_entry)
+                self.show_saved_msg = True
         except Exception as e:
             print(f"Error: {e}")
 
+    def _create_confetti(self):
+        for _ in range(100):
+            self.confetti_particles.append({
+                "x": random.randint(0, WORDLE_SCREEN_WIDTH),
+                "y": random.randint(-WORDLE_SCREEN_HEIGHT, 0),
+                "size": random.randint(5, 10),
+                "color": random.choice([GREEN, YELLOW, WHITE, RED, (52, 152, 219)]),
+                "speed": random.uniform(2, 5)
+            })
+
     def draw(self, surface):
+        #w zależności od wyniku dźwięk i konfetti
         if not self.sound_played:
-            if self.won and self.victory_sound:
-                self.victory_sound.play()
-            elif not self.won and self.defeat_sound:
-                self.defeat_sound.play()
+            if self.won:
+                if self.victory_sound:
+                    self.victory_sound.play()
+                self._create_confetti()
+            else:
+                if self.defeat_sound:
+                    self.defeat_sound.play()
             self.sound_played = True
 
         surface.fill(settings.get_window_color())
 
+        #rysowanie konfetti
+        if self.won:
+            for p in self.confetti_particles:
+                pygame.draw.rect(surface, p["color"], (p["x"], p["y"], p["size"], p["size"]))
+                p["y"] += p["speed"]
+                p["x"] += random.uniform(-1, 1)
+                if p["y"] > WORDLE_SCREEN_HEIGHT:
+                    p["y"] = random.randint(-50, -10)
+                    p["x"] = random.randint(0, WORDLE_SCREEN_WIDTH)
+
+        #motyw
         ui_color = WHITE if settings.IS_DARK_MODE else BLACK
 
-        status_text = "YOU WON!" if self.won else "YOU LOST!"
+        #kolor wyniku
         status_color = GREEN if self.won else RED
 
-        #wynik AI
+        #wynik gry
+        main_result = "VICTORY" if self.won else "DEFEAT"
         prefix = "AI PLAYER " if self.is_ai else ""
-        status_text = f"{prefix}WON!" if self.won else f"{prefix}LOST!"
-
+        full_status_text = f"{prefix}{main_result}"
         font_to_use = small_font if self.is_ai else medium_font
-        status_surf = font_to_use.render(status_text, True, status_color)
 
-        status_surf = medium_font.render(status_text, True, status_color)
+        status_surf = font_to_use.render(full_status_text, True, status_color)
         status_rect = status_surf.get_rect(center=(WORDLE_SCREEN_WIDTH // 2, 150))
         surface.blit(status_surf, status_rect)
 
+        #wyświetlenie odpowiedzi
         label_surf = very_small_font.render("THE ANSWER WAS:", True, ui_color)
-        label_rect = label_surf.get_rect(center=(WORDLE_SCREEN_WIDTH // 2, 240))
-        surface.blit(label_surf, label_rect)
-
+        surface.blit(label_surf, label_surf.get_rect(center=(WORDLE_SCREEN_WIDTH // 2, 240)))
 
         answer_surf = small_font.render(self.word_to_guess.upper(), True, ui_color)
-        answer_rect = answer_surf.get_rect(center=(WORDLE_SCREEN_WIDTH // 2, 285))
-        surface.blit(answer_surf, answer_rect)
+        surface.blit(answer_surf, answer_surf.get_rect(center=(WORDLE_SCREEN_WIDTH // 2, 285)))
 
+        #przycisk exit i save
         btn_color = DARK_GRAY
-        btn_border_color = ui_color
+        for btn, txt in [(self.button_exit, "EXIT"), (self.button_save, "SAVE")]:
+            pygame.draw.rect(surface, btn_color, btn, border_radius=10)
+            pygame.draw.rect(surface, ui_color, btn, width=3, border_radius=10)
+            t_surf = small_font.render(txt, True, WHITE)
+            surface.blit(t_surf, t_surf.get_rect(center=btn.center))
 
-        #przycisk exit
-        pygame.draw.rect(surface, btn_color, self.button_exit, border_radius=10)
-        pygame.draw.rect(surface, btn_border_color, self.button_exit, width=3, border_radius=10)
-        exit_surf = small_font.render("EXIT", True, WHITE)
-        surface.blit(exit_surf, exit_surf.get_rect(center=self.button_exit.center))
-
-        #przycisk save
-        pygame.draw.rect(surface, btn_color, self.button_save, border_radius=10)
-        pygame.draw.rect(surface, btn_border_color, self.button_save, width=3, border_radius=10)
-        save_surf = small_font.render("SAVE", True, WHITE)
-        surface.blit(save_surf, save_surf.get_rect(center=self.button_save.center))
+        #wiadomość, że gra została zapisana
+        if self.show_saved_msg:
+            saved_txt = very_small_font.render("GAME PROGRESS SAVED", True, GREEN)
+            surface.blit(saved_txt, saved_txt.get_rect(center=(WORDLE_SCREEN_WIDTH // 2, 550)))

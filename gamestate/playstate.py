@@ -11,10 +11,17 @@ class PlayState(State):
         super().__init__(game)
         self.board = Board()
         self.keyboard = Keyboard()
+
+        #losowanie hasła
         self.word_to_guess, self.list_of_words = word_draw()
         self.users_word = []
         print(f"Word to guess: {self.word_to_guess}")
 
+        #wiadomość do trybu hard
+        self.notification_msg = ""
+        self.notification_timer = 0
+
+        #inicjalizowanie dźwięku
         pygame.mixer.init()
         try:
             self.click_sound = pygame.mixer.Sound("other/click.wav")
@@ -23,6 +30,7 @@ class PlayState(State):
             print("Warning: Could not load other/click.wav")
             self.click_sound = None
 
+        #wczytywanie słownika
         try:
             with open("library/przefiltrowany_slownik.txt", "r", encoding="utf-8") as f:
                 self.valid_words = {line.strip().upper() for line in f}
@@ -55,6 +63,7 @@ class PlayState(State):
         return self
 
     def _process_command(self, command):
+        #usuwanie ostatniej litery
         if command == "REMOVE":
             if len(self.users_word) > 0:
                 if self.click_sound:
@@ -62,33 +71,39 @@ class PlayState(State):
                 self.board.delete_letter()
                 self.users_word.pop()
 
+
         elif command == "ENTER":
             if len(self.users_word) == 5:
                 current_attempt = "".join(self.users_word).upper()
 
-                #sprwdzenie czy słowo istnieje
+                #sprawdzenie czy słowo istnieje w słowniku
                 if current_attempt not in self.valid_words:
+                    self.notification_msg = "NOT IN WORD LIST"
+                    self.notification_timer = 300
                     self.board.shake_animation()
                     return None
 
+                #tryb hard
                 if settings.IS_HARD_MODE and self.board.current_row > 0:
                     last_row = self.board.rows[self.board.current_row - 1]
-
                     for i, tile in enumerate(last_row.tiles):
-                        #zielona litera na tym samym miejscu
+                        #zielone litery muszą być tam gdzie były
                         if tile.color == settings.GREEN:
                             if current_attempt[i] != tile.letter:
-                                print(f"Hard Mode: {tile.letter} must be at position {i + 1}")
+                                self.notification_msg = f"{tile.letter} MUST BE AT POSITION {i + 1}"
+                                self.notification_timer = 300
                                 self.board.shake_animation()
                                 return None
 
-                        #żółta litera musi być użyta
+                        #żółte litery muszą zostać użyte
                         elif tile.color == settings.YELLOW:
                             if tile.letter not in current_attempt:
-                                print(f"Hard Mode: Must use letter {tile.letter}")
+                                self.notification_msg = f"MUST USE LETTER {tile.letter}"
+                                self.notification_timer = 300
                                 self.board.shake_animation()
                                 return None
 
+                #sprawdzenie kolorów kafelków na planszy
                 self.board.check_tiles(self.users_word, self.word_to_guess)
 
                 #obsługa kolorów na klawiaturze
@@ -99,6 +114,7 @@ class PlayState(State):
                 is_win = current_attempt == self.word_to_guess.strip().upper()
                 is_lose = self.board.current_row == 5
 
+                #przejście do podsumowania
                 if is_win or is_lose:
                     new_state = SummaryState(self.game)
                     new_state.is_ai = getattr(self, 'is_ai', False)
@@ -107,6 +123,7 @@ class PlayState(State):
                     new_state.won = is_win
                     return new_state
 
+                #przejście do następnego wiersza
                 self.board.next_row()
                 self.users_word = []
 
@@ -122,5 +139,19 @@ class PlayState(State):
 
     def draw(self, surface):
         surface.fill(settings.get_window_color())
-        self.keyboard.create_keyboard(surface)
-        self.board.create_board(surface)
+        self.keyboard.create_keyboard(surface) #rysowanie klawiatury
+        self.board.create_board(surface) #rysowanie planszy
+
+        #wyświetlanie powiadomień nad planszą
+        if self.notification_timer > 0:
+            msg_surf = settings.very_small_font.render(self.notification_msg, True, settings.WHITE)
+
+            msg_rect = msg_surf.get_rect(center=(settings.WORDLE_SCREEN_WIDTH // 2, 60))
+
+            #dodanie tła pod tekstem
+            bg_rect = msg_rect.inflate(20, 10)
+            pygame.draw.rect(surface, settings.DARK_GRAY, bg_rect, border_radius=5)
+            surface.blit(msg_surf, msg_rect)
+
+            #odliczanie czasu
+            self.notification_timer -= 1

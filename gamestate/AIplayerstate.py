@@ -10,24 +10,22 @@ class AIPlayerState(PlayState):
         super().__init__(game)
         self.is_ai = True
 
-        # ===== SŁOWNIK =====
+        #użycie słownika
         self.all_words = [w.upper() for w in self.list_of_words]
         self.possible_words = self.all_words.copy()
         self.used_words = set()
 
-        # ===== WIEDZA AI =====
-        self.greens = {}            # index -> letter
-        self.yellows = {}           # letter -> set(banned_positions)
+        #zmienna dla ai
+        self.greens = {}
+        self.yellows = {}
         self.grays = set()
 
-        # ===== STEROWANIE =====
+        #sterowanie
         self.current_guess = ""
         self.next_action_time = pygame.time.get_ticks()
         self.delay = 450
 
         self.last_guess_letters = set()
-
-    # ================= MAIN LOOP =================
 
     def handle_events(self, events):
         now = pygame.time.get_ticks()
@@ -36,10 +34,8 @@ class AIPlayerState(PlayState):
             return self.ai_step()
         return self
 
-    # ================= AI STEP =================
-
     def ai_step(self):
-        # WYBÓR NOWEGO SŁOWA
+        #wybór nowego słowa
         if not self.current_guess:
             self._filter_possible_words()
 
@@ -48,7 +44,7 @@ class AIPlayerState(PlayState):
             self.used_words.add(self.current_guess)
             self.users_word = []
 
-        # WPISYWANIE LITER
+        #wpisywanie liter
         if len(self.users_word) < 5:
             if self.click_sound:
                 self.click_sound.play()
@@ -57,21 +53,20 @@ class AIPlayerState(PlayState):
             self.users_word.append(letter)
             return None
 
-        # ENTER
+        #enter
         if len(self.users_word) == 5:
-            # 1. Sprawdzenie kafelków na planszy
+            #sprawdzenie kafelków
             self.board.check_tiles(self.users_word, self.word_to_guess)
             self.last_guess_letters = set(self.users_word)
 
-            # 2. Pobranie wyników (kolorów) z planszy
+            #pobranie kolorów z planszy
             results = self.board.get_last_row_results()
 
-            # 3. AKTUALIZACJA KLAWIATURY (Tego brakowało)
-            # Pobieramy kafelki z rzędu, który właśnie został oceniony
+            #aktualizacja klawiatury
             current_tiles = self.board.rows[self.board.current_row].tiles
             self.keyboard.change_color(current_tiles)
 
-            # 4. Analiza dla algorytmu AI
+            #analizowanie
             self._analyze_results(results)
 
             attempt = "".join(self.users_word)
@@ -86,48 +81,49 @@ class AIPlayerState(PlayState):
                 summary.won = win
                 return summary
 
-            # 5. Przejście do kolejnego rzędu
+            #przejście do następnego rzędu
             self.board.next_row()
             self.users_word = []
             self.current_guess = ""
 
         return None
 
-    # ================= ANALIZA KOLORÓW =================
-
     def _analyze_results(self, results):
+        #analizowanie kolorów
         for r in results:
             i = r["index"]
             letter = r["letter"]
             color = r["color"]
 
+            #zielony
             if color == settings.GREEN:
                 self.greens[i] = letter
 
+            #żółty
             elif color == settings.YELLOW:
                 if letter not in self.yellows:
                     self.yellows[letter] = set()
                 self.yellows[letter].add(i)
 
-            else:  # GRAY
+            #szary
+            else:
                 if letter not in self.greens.values() and letter not in self.yellows:
                     self.grays.add(letter)
 
-    # ================= FILTR SŁÓW =================
-
     def _filter_possible_words(self):
+        #filtrowanie słów
         filtered = []
 
         green_positions = set(self.greens.keys())
 
         for word in self.all_words:
-            # nie powtarzaj słów
+            #zakaz powtarzania słów
             if word in self.used_words:
                 continue
 
             valid = True
 
-            # ===== ZIELONE =====
+            #zielone-litera musi być na tym samym miejscu
             for i, letter in self.greens.items():
                 if word[i] != letter:
                     valid = False
@@ -135,7 +131,7 @@ class AIPlayerState(PlayState):
             if not valid:
                 continue
 
-            # ===== SZARE =====
+            #szare
             for letter in self.grays:
                 if letter in word:
                     valid = False
@@ -143,9 +139,8 @@ class AIPlayerState(PlayState):
             if not valid:
                 continue
 
-            # ===== ŻÓŁTE =====
+            #żółte-litera musi się pojawić
             for letter, banned_positions in self.yellows.items():
-                # litera MUSI wystąpić
                 if letter not in word:
                     valid = False
                     break
@@ -153,11 +148,11 @@ class AIPlayerState(PlayState):
                 found_valid_position = False
 
                 for i in range(5):
-                    # nie wolno na miejscu żółtym
+                    #na innym miejscu niż poprzednio
                     if i in banned_positions:
                         continue
 
-                    # nie wolno na miejscu zielonym (innej litery)
+                    #na innym miejscu niż zielone
                     if i in green_positions and self.greens[i] != letter:
                         continue
 
@@ -175,18 +170,16 @@ class AIPlayerState(PlayState):
         self.possible_words = filtered
 
     def _choose_next_word(self):
-        # helper: sprawdza i pilnuje used_words
         def pick_from(words):
             words = [w for w in words if w not in self.used_words]
             return random.choice(words) if words else None
 
-        # 1. normalny filtr (pełne zasady)
+        #zastosowanie normalnego filtru
         self._filter_possible_words()
         choice = pick_from(self.possible_words)
         if choice:
             return choice
 
-        # 2. fallback: pełne zasady, ale od całego słownika
         candidates = [
             w for w in self.all_words
             if w not in self.used_words and self._word_fits_constraints(w)
@@ -195,7 +188,7 @@ class AIPlayerState(PlayState):
         if choice:
             return choice
 
-        # 3. fallback: tylko zielone + żółte (bez szarych)
+        #tylko zielone + żółte (bez szarych)
         candidates = []
         for w in self.all_words:
             if w in self.used_words:
@@ -218,22 +211,22 @@ class AIPlayerState(PlayState):
         if choice:
             return choice
 
-        # 4. OSTATECZNOŚĆ: cokolwiek nowego
+        #cokolwiek innego
         candidates = [w for w in self.all_words if w not in self.used_words]
         return random.choice(candidates)
 
     def _word_fits_constraints(self, word):
-        # GREEN
+        #zielone
         for i, l in self.greens.items():
             if word[i] != l:
                 return False
 
-        # GRAY
+        #szare
         for l in self.grays:
             if l in word:
                 return False
 
-        # YELLOW
+        #żółte
         for l, banned in self.yellows.items():
             if l not in word:
                 return False
@@ -252,4 +245,3 @@ class AIPlayerState(PlayState):
                 return False
 
         return True
-
